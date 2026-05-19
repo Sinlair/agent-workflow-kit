@@ -23,7 +23,8 @@ This repository is a template kit for adding practical AI coding agent workflows
 Use these commands while developing this kit:
 
 ```bash
-shellcheck scripts/install.sh
+scripts/test.sh
+tests/smoke.sh
 ```
 
 There is no build step for the template files.
@@ -31,5 +32,8 @@ There is no build step for the template files.
 ## Release Checklist
 
 - Confirm the installer still copies all expected files.
+- Confirm profile detection works for changed project templates.
+- Confirm `scripts/doctor.sh` reports a useful score and missing signals.
+- Confirm JSON output stays valid when `scripts/doctor.sh --json` changes.
 - Confirm the README quick start works from a clean clone.
 - Keep examples generic and avoid private project details.

@@ -1,0 +1,22 @@
+name: Agent Workflow Kit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  doctor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run agent readiness scan
+        run: |
+          if [ -x scripts/doctor.sh ]; then
+            scripts/doctor.sh . --min-score 80
+          else
+            bash scripts/doctor.sh . --min-score 80
+          fi

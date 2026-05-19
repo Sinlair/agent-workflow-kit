@@ -2,15 +2,20 @@
 
 Project-ready instructions and templates for AI coding agents.
 
-Agent Workflow Kit gives any repository a small, practical operating system for Codex, Claude Code, Cursor, and other coding agents. It focuses on the parts that usually make agent work fragile: missing project context, unclear commands, weak review habits, and inconsistent handoffs.
+Agent Workflow Kit gives any repository a small, practical operating system for Codex, Claude Code, Cursor, Copilot, Gemini CLI, and other coding agents. It focuses on the parts that usually make agent work fragile: missing project context, unclear commands, weak review habits, and inconsistent handoffs.
+
+[中文说明](README.zh-CN.md)
 
 ## What It Includes
 
 - `AGENTS.md`: a project instruction file agents can read before editing code.
+- `CLAUDE.md`, `GEMINI.md`, Copilot instructions, and Cursor rules.
 - `docs/agent-review-checklist.md`: a risk-focused code review checklist.
 - `docs/testing-strategy.md`: a lightweight test planning guide.
 - `.github/pull_request_template.md`: a PR template designed for human and agent contributors.
-- `scripts/install.sh`: an installer that copies the kit into another repository.
+- `scripts/install.sh`: an installer with profile detection, dry-run, and overwrite controls.
+- `scripts/doctor.sh`: an agent-readiness scanner with text and JSON output.
+- `examples/`: sample `AGENTS.md` files for common project shapes.
 
 ## Quick Start
 
@@ -22,7 +27,81 @@ cd agent-workflow-kit
 ./scripts/install.sh /path/to/your/project
 ```
 
+The installer auto-detects common project types:
+
+- `node`
+- `python`
+- `go`
+- `rust`
+- `nextjs`
+- `generic`
+
+You can also select a profile explicitly:
+
+```bash
+./scripts/install.sh /path/to/your/project --profile node
+```
+
 Then edit `/path/to/your/project/AGENTS.md` and replace the placeholders with your project's real commands and conventions.
+
+## Installer Options
+
+```bash
+./scripts/install.sh /path/to/project [options]
+
+Options:
+  --profile NAME    Template profile: auto, generic, node, python, go, rust, nextjs
+  --dry-run         Show what would be installed without writing files
+  --force           Overwrite existing files without creating backups
+  --no-agent-files  Do not install CLAUDE.md, GEMINI.md, Copilot, or Cursor files
+  --no-docs         Do not install review and testing docs
+  --with-ci         Install a GitHub Actions readiness workflow
+  --list-profiles   List available template profiles
+  --help            Show help
+```
+
+Examples:
+
+```bash
+./scripts/install.sh ../my-app --dry-run
+./scripts/install.sh ../my-app --profile python
+./scripts/install.sh ../my-app --force
+./scripts/install.sh ../my-app --no-agent-files
+./scripts/install.sh ../my-app --with-ci
+```
+
+## Agent Readiness Scan
+
+Run `doctor.sh` to see whether a project has enough structure for AI coding agents:
+
+```bash
+./scripts/doctor.sh /path/to/your/project
+```
+
+Use `--json` for automation and `--min-score` to enforce a threshold:
+
+```bash
+./scripts/doctor.sh /path/to/your/project --json
+./scripts/doctor.sh /path/to/your/project --min-score 80
+```
+
+Example output:
+
+```text
+Agent Readiness: 72/100
+Detected profile: node
+Minimum score: 60
+
+Strengths:
+- AGENTS.md exists
+- Pull request template exists
+
+Missing or weak signals:
+- No CONTRIBUTING.md
+- No docs/testing-strategy.md
+```
+
+Scoring details are documented in [docs/doctor-scoring.md](docs/doctor-scoring.md).
 
 ## Recommended Agent Workflow
 
@@ -37,17 +116,34 @@ Then edit `/path/to/your/project/AGENTS.md` and replace the placeholders with yo
 ```text
 .
 ├── AGENTS.md
-├── LICENSE
 ├── README.md
+├── README.zh-CN.md
 ├── docs
 │   ├── agent-review-checklist.md
+│   ├── doctor-scoring.md
+│   ├── profiles.md
 │   └── testing-strategy.md
 ├── scripts
-│   └── install.sh
+│   ├── doctor.sh
+│   ├── install.sh
+│   └── test.sh
+├── examples
+│   ├── go-service
+│   ├── nextjs-app
+│   ├── node-api
+│   ├── python-cli
+│   └── rust-cli
 └── templates
-    ├── AGENTS.md
-    └── github
-        └── pull_request_template.md
+    ├── agents
+    ├── github
+    └── profiles
+```
+
+## Local Checks
+
+```bash
+./scripts/test.sh
+./tests/smoke.sh
 ```
 
 ## Who This Is For

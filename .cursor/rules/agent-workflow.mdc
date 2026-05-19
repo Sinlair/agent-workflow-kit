@@ -1,0 +1,6 @@
+---
+description: Agent workflow defaults for this repository
+alwaysApply: true
+---
+
+Read `AGENTS.md` before editing. Follow the documented project commands, testing guidance, and handoff format.
