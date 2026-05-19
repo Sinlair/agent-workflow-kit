@@ -25,6 +25,7 @@ Use these commands while developing this kit:
 ```bash
 scripts/test.sh
 tests/smoke.sh
+bin/agent-workflow-kit version
 ```
 
 There is no build step for the template files.

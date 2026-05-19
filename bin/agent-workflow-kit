@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+usage() {
+  cat >&2 <<'USAGE'
+Usage: agent-workflow-kit COMMAND [args]
+
+Commands:
+  install     Install templates into a target project
+  doctor      Scan a project for AI agent readiness
+  profiles    List available template profiles
+  version     Print version
+  help        Show this help
+
+Examples:
+  agent-workflow-kit install ../my-project --profile node
+  agent-workflow-kit doctor ../my-project --markdown --strict
+  agent-workflow-kit profiles
+USAGE
+}
+
+if [ "$#" -lt 1 ]; then
+  usage
+  exit 2
+fi
+
+command=$1
+shift
+
+case "$command" in
+  install)
+    exec "$repo_dir/scripts/install.sh" "$@"
+    ;;
+  doctor)
+    exec "$repo_dir/scripts/doctor.sh" "$@"
+    ;;
+  profiles)
+    exec "$repo_dir/scripts/install.sh" --list-profiles
+    ;;
+  version)
+    cat "$repo_dir/VERSION"
+    ;;
+  help|--help|-h)
+    usage
+    ;;
+  *)
+    printf 'Unknown command: %s\n' "$command" >&2
+    usage
+    exit 2
+    ;;
+esac

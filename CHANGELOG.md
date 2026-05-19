@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added `VERSION` and a unified `bin/agent-workflow-kit` CLI.
+- Added installer manifest output at `.agent-workflow-kit/manifest`.
+- Added `--with-tools` to install helper scripts and a project-local wrapper into target projects.
 - Added installer profile detection for generic, Node.js, Python, Go, Rust, and Next.js projects.
 - Added installer options for dry runs, forced overwrites, skipping docs, skipping tool-specific agent files, and listing profiles.
 - Added optional installer support for a GitHub Actions readiness workflow template.

@@ -13,6 +13,7 @@
 - `.github/pull_request_template.md`：适合人类和 Agent 协作的 PR 模板。
 - `scripts/install.sh`：支持自动识别项目类型、dry-run、force 的安装脚本。
 - `scripts/doctor.sh`：扫描仓库的 Agent 友好度，支持文本和 JSON 输出。
+- `bin/agent-workflow-kit`：统一入口，支持 install、doctor、profiles、version。
 - `examples/`：常见项目形态的 `AGENTS.md` 示例。
 
 ## 快速开始
@@ -21,6 +22,13 @@
 git clone https://github.com/Sinlair/agent-workflow-kit.git
 cd agent-workflow-kit
 ./scripts/install.sh /path/to/your/project
+```
+
+也可以使用统一 CLI：
+
+```bash
+./bin/agent-workflow-kit install /path/to/your/project
+./bin/agent-workflow-kit doctor /path/to/your/project --markdown --strict
 ```
 
 安装器会自动识别常见项目类型：
@@ -53,7 +61,10 @@ Options:
   --no-agent-files  不安装 CLAUDE.md、GEMINI.md、Copilot、Cursor 文件
   --no-docs         不安装 review/testing 文档
   --with-ci         安装 GitHub Actions readiness workflow
+  --with-tools      把 helper scripts 安装到目标项目
+  --no-manifest     不写入 .agent-workflow-kit/manifest
   --list-profiles   列出可用模板
+  --version         输出 Agent Workflow Kit 版本
   --help            显示帮助
 ```
 
@@ -66,7 +77,17 @@ Options:
 ./scripts/install.sh ../my-app --mode skip
 ./scripts/install.sh ../my-app --no-agent-files
 ./scripts/install.sh ../my-app --with-ci
+./scripts/install.sh ../my-app --with-tools
 ```
+
+安装器默认写入 `.agent-workflow-kit/manifest`，方便团队审计安装版本、profile、mode 和复制的文件。只有在不需要这份审计记录时才使用 `--no-manifest`。
+
+使用 `--with-tools` 或 `--with-ci` 时，目标项目还会得到：
+
+- `scripts/doctor.sh`
+- `scripts/agent-workflow-kit`
+
+安装后的 wrapper 支持在目标项目里运行 `doctor` 和 `version`。
 
 ## 检查项目是否适合 Agent
 

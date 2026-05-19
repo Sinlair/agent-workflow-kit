@@ -50,10 +50,21 @@ scripts/doctor.sh ../my-project --markdown --strict
 
 Paste the Markdown report into a tracking issue or pull request. The report gives concrete missing signals and recommended next steps.
 
-## 5. Add CI When Ready
+## 5. Install Helper Scripts
+
+```bash
+scripts/install.sh ../my-project --with-tools
+```
+
+This copies `scripts/doctor.sh` into the target project so maintainers can run readiness checks without keeping this repository checked out.
+It also installs `scripts/agent-workflow-kit`, a small wrapper for `doctor` and `version` inside the target project.
+
+The installer writes `.agent-workflow-kit/manifest` by default. Keep it committed when you want a simple audit trail for installed files and version.
+
+## 6. Add CI When Ready
 
 ```bash
 scripts/install.sh ../my-project --with-ci
 ```
 
-The CI template runs `scripts/doctor.sh . --min-score 80` when the target repository includes the doctor script.
+`--with-ci` also installs `scripts/doctor.sh`. The CI template runs `scripts/doctor.sh . --min-score 80`.

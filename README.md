@@ -15,6 +15,7 @@ Agent Workflow Kit gives any repository a small, practical operating system for 
 - `.github/pull_request_template.md`: a PR template designed for human and agent contributors.
 - `scripts/install.sh`: an installer with profile detection, dry-run, and overwrite controls.
 - `scripts/doctor.sh`: an agent-readiness scanner with text and JSON output.
+- `bin/agent-workflow-kit`: a small command dispatcher for install, doctor, profiles, and version.
 - `examples/`: sample `AGENTS.md` files for common project shapes.
 
 ## Quick Start
@@ -25,6 +26,13 @@ Install the kit into another repository:
 git clone https://github.com/Sinlair/agent-workflow-kit.git
 cd agent-workflow-kit
 ./scripts/install.sh /path/to/your/project
+```
+
+Or use the unified CLI:
+
+```bash
+./bin/agent-workflow-kit install /path/to/your/project
+./bin/agent-workflow-kit doctor /path/to/your/project --markdown --strict
 ```
 
 The installer auto-detects common project types:
@@ -57,7 +65,10 @@ Options:
   --no-agent-files  Do not install CLAUDE.md, GEMINI.md, Copilot, or Cursor files
   --no-docs         Do not install review and testing docs
   --with-ci         Install a GitHub Actions readiness workflow
+  --with-tools      Install helper scripts into the target project
+  --no-manifest     Do not write .agent-workflow-kit/manifest
   --list-profiles   List available template profiles
+  --version         Print Agent Workflow Kit version
   --help            Show help
 ```
 
@@ -70,7 +81,17 @@ Examples:
 ./scripts/install.sh ../my-app --mode skip
 ./scripts/install.sh ../my-app --no-agent-files
 ./scripts/install.sh ../my-app --with-ci
+./scripts/install.sh ../my-app --with-tools
 ```
+
+The installer writes `.agent-workflow-kit/manifest` by default so teams can audit the installed version, profile, mode, and copied files. Use `--no-manifest` only when you do not want that audit trail.
+
+When `--with-tools` or `--with-ci` is used, the target project also gets:
+
+- `scripts/doctor.sh`
+- `scripts/agent-workflow-kit`
+
+The installed wrapper supports `doctor` and `version` inside the target project.
 
 ## Agent Readiness Scan
 
@@ -123,6 +144,9 @@ Scoring details are documented in [docs/doctor-scoring.md](docs/doctor-scoring.m
 ├── AGENTS.md
 ├── README.md
 ├── README.zh-CN.md
+├── VERSION
+├── bin
+│   └── agent-workflow-kit
 ├── docs
 │   ├── agent-review-checklist.md
 │   ├── adoption-guide.md

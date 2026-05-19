@@ -13,7 +13,10 @@ Options:
   --no-agent-files  Do not install CLAUDE.md, GEMINI.md, Copilot, or Cursor files
   --no-docs         Do not install review and testing docs
   --with-ci         Install a GitHub Actions readiness workflow
+  --with-tools      Install Agent Workflow Kit helper scripts into the target project
+  --no-manifest     Do not write .agent-workflow-kit/manifest
   --list-profiles   List available template profiles
+  --version         Print Agent Workflow Kit version
   --help            Show this help
 
 Examples:
@@ -29,7 +32,11 @@ mode=backup
 install_agent_files=true
 install_docs=true
 install_ci=false
+install_tools=false
+write_manifest=true
 target_dir=
+installed_files=$(mktemp)
+trap 'rm -f "$installed_files"' EXIT
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -67,6 +74,15 @@ while [ "$#" -gt 0 ]; do
       ;;
     --with-ci)
       install_ci=true
+      install_tools=true
+      shift
+      ;;
+    --with-tools)
+      install_tools=true
+      shift
+      ;;
+    --no-manifest)
+      write_manifest=false
       shift
       ;;
     --list-profiles)
@@ -76,6 +92,10 @@ while [ "$#" -gt 0 ]; do
         [ -d "$profile_dir" ] || continue
         basename -- "$profile_dir"
       done | sort
+      exit 0
+      ;;
+    --version)
+      cat "$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)/VERSION"
       exit 0
       ;;
     --help|-h)
@@ -207,6 +227,8 @@ copy_file() {
     cp "$src" "$dest"
     printf 'Installed %s\n' "$dest"
   fi
+
+  printf '%s\n' "${dest#"$target_dir"/}" >> "$installed_files"
 }
 
 copy_optional_file() {
@@ -231,11 +253,35 @@ if [ "$install_ci" = true ]; then
   copy_file "$repo_dir/templates/github/workflows/agent-workflow-kit.yml" "$target_dir/.github/workflows/agent-workflow-kit.yml"
 fi
 
+if [ "$install_tools" = true ]; then
+  copy_file "$repo_dir/scripts/doctor.sh" "$target_dir/scripts/doctor.sh"
+  copy_file "$repo_dir/templates/tools/agent-workflow-kit" "$target_dir/scripts/agent-workflow-kit"
+fi
+
 if [ "$install_agent_files" = true ]; then
   copy_optional_file "$repo_dir/templates/agents/CLAUDE.md" "$target_dir/CLAUDE.md"
   copy_optional_file "$repo_dir/templates/agents/GEMINI.md" "$target_dir/GEMINI.md"
   copy_optional_file "$repo_dir/templates/agents/copilot-instructions.md" "$target_dir/.github/copilot-instructions.md"
   copy_optional_file "$repo_dir/templates/agents/cursor-agent-workflow.mdc" "$target_dir/.cursor/rules/agent-workflow.mdc"
+fi
+
+if [ "$write_manifest" = true ]; then
+  ensure_dir "$target_dir/.agent-workflow-kit"
+  manifest="$target_dir/.agent-workflow-kit/manifest"
+  version=$(cat "$repo_dir/VERSION")
+  if [ "$dry_run" = true ]; then
+    printf '[dry-run] write %s\n' "$manifest"
+  else
+    {
+      printf 'version=%s\n' "$version"
+      printf 'profile=%s\n' "$profile"
+      printf 'mode=%s\n' "$mode"
+      printf 'installed_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      printf 'files=\n'
+      sort -u "$installed_files"
+    } > "$manifest"
+    printf 'Installed %s\n' "$manifest"
+  fi
 fi
 
 if [ "$dry_run" = true ]; then

@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+usage() {
+  cat >&2 <<'USAGE'
+Usage: scripts/agent-workflow-kit COMMAND [args]
+
+Commands:
+  doctor      Scan this project for AI agent readiness
+  version     Print installed Agent Workflow Kit version
+  help        Show this help
+
+Examples:
+  scripts/agent-workflow-kit doctor . --markdown --strict
+  scripts/agent-workflow-kit version
+USAGE
+}
+
+if [ "$#" -lt 1 ]; then
+  usage
+  exit 2
+fi
+
+command=$1
+shift
+
+case "$command" in
+  doctor)
+    exec "$project_dir/scripts/doctor.sh" "$@"
+    ;;
+  version)
+    if [ -f "$project_dir/.agent-workflow-kit/manifest" ]; then
+      sed -n 's/^version=//p' "$project_dir/.agent-workflow-kit/manifest" | sed -n '1p'
+    else
+      printf 'Unknown: .agent-workflow-kit/manifest not found\n' >&2
+      exit 1
+    fi
+    ;;
+  help|--help|-h)
+    usage
+    ;;
+  *)
+    printf 'Unknown command: %s\n' "$command" >&2
+    usage
+    exit 2
+    ;;
+esac

@@ -6,6 +6,10 @@ cd "$repo_dir"
 
 bash -n scripts/install.sh
 bash -n scripts/doctor.sh
+bash -n bin/agent-workflow-kit
+
+test "$(scripts/install.sh --version)" = "$(cat VERSION)"
+test "$(bin/agent-workflow-kit version)" = "$(cat VERSION)"
 
 profiles=$(scripts/install.sh --list-profiles | tr '\n' ' ')
 for expected_profile in auto generic node python go rust nextjs; do
@@ -30,10 +34,21 @@ test -f "$project/GEMINI.md"
 test -f "$project/.github/copilot-instructions.md"
 test -f "$project/.cursor/rules/agent-workflow.mdc"
 test ! -f "$project/.github/workflows/agent-workflow-kit.yml"
+test -f "$project/.agent-workflow-kit/manifest"
+grep -q '^profile=generic$' "$project/.agent-workflow-kit/manifest"
 
 project=$(mktemp -d)
 scripts/install.sh "$project" --profile generic --with-ci
 test -f "$project/.github/workflows/agent-workflow-kit.yml"
+test -x "$project/scripts/doctor.sh"
+test -x "$project/scripts/agent-workflow-kit"
+
+project=$(mktemp -d)
+bin/agent-workflow-kit install "$project" --profile generic --with-tools
+test -x "$project/scripts/doctor.sh"
+test -x "$project/scripts/agent-workflow-kit"
+bin/agent-workflow-kit doctor "$project" --min-score 60
+"$project/scripts/agent-workflow-kit" doctor "$project" --min-score 60
 
 project=$(mktemp -d)
 scripts/install.sh "$project" --profile generic --no-docs --no-agent-files
@@ -41,6 +56,10 @@ test -f "$project/AGENTS.md"
 test -f "$project/.github/pull_request_template.md"
 test ! -e "$project/docs/agent-review-checklist.md"
 test ! -e "$project/CLAUDE.md"
+
+project=$(mktemp -d)
+scripts/install.sh "$project" --profile generic --no-manifest
+test ! -e "$project/.agent-workflow-kit/manifest"
 
 project=$(mktemp -d)
 printf 'custom\n' > "$project/AGENTS.md"
