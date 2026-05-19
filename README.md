@@ -53,6 +53,7 @@ Options:
   --profile NAME    Template profile: auto, generic, node, python, go, rust, nextjs
   --dry-run         Show what would be installed without writing files
   --force           Overwrite existing files without creating backups
+  --mode MODE       Existing-file behavior: backup, skip, overwrite
   --no-agent-files  Do not install CLAUDE.md, GEMINI.md, Copilot, or Cursor files
   --no-docs         Do not install review and testing docs
   --with-ci         Install a GitHub Actions readiness workflow
@@ -66,6 +67,7 @@ Examples:
 ./scripts/install.sh ../my-app --dry-run
 ./scripts/install.sh ../my-app --profile python
 ./scripts/install.sh ../my-app --force
+./scripts/install.sh ../my-app --mode skip
 ./scripts/install.sh ../my-app --no-agent-files
 ./scripts/install.sh ../my-app --with-ci
 ```
@@ -79,10 +81,13 @@ Run `doctor.sh` to see whether a project has enough structure for AI coding agen
 ```
 
 Use `--json` for automation and `--min-score` to enforce a threshold:
+Use `--markdown` when pasting a report into a pull request or issue.
 
 ```bash
 ./scripts/doctor.sh /path/to/your/project --json
+./scripts/doctor.sh /path/to/your/project --markdown
 ./scripts/doctor.sh /path/to/your/project --min-score 80
+./scripts/doctor.sh /path/to/your/project --strict
 ```
 
 Example output:
@@ -120,6 +125,7 @@ Scoring details are documented in [docs/doctor-scoring.md](docs/doctor-scoring.m
 ├── README.zh-CN.md
 ├── docs
 │   ├── agent-review-checklist.md
+│   ├── adoption-guide.md
 │   ├── doctor-scoring.md
 │   ├── profiles.md
 │   └── testing-strategy.md

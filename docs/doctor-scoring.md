@@ -39,3 +39,20 @@ scripts/doctor.sh . --min-score 80
 ```
 
 The command exits non-zero when the score is below the minimum. Use `--json` when integrating with scripts or CI.
+
+## Output Modes
+
+```bash
+scripts/doctor.sh . --json
+scripts/doctor.sh . --markdown
+```
+
+JSON output is intended for automation. Markdown output is intended for pull requests, issues, and release notes.
+
+## Strict Mode
+
+```bash
+scripts/doctor.sh . --strict
+```
+
+Strict mode keeps the same score model, but it also flags obvious placeholder text in `AGENTS.md`. Use it after installation to confirm the template was customized for the target repository.

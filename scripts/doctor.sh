@@ -10,7 +10,9 @@ Scan a repository and report how ready it is for AI coding agents.
 Options:
   --profile NAME    Override detected profile: auto, generic, node, python, go, rust, nextjs
   --json            Print machine-readable JSON
+  --markdown        Print a Markdown report
   --min-score N     Exit non-zero when score is below N, default: 60
+  --strict          Require AGENTS.md customization signals, not only file presence
   --help            Show this help
 
 Examples:
@@ -21,8 +23,9 @@ USAGE
 }
 
 profile=auto
-json=false
+output=text
 min_score=60
+strict=false
 target_dir=
 
 while [ "$#" -gt 0 ]; do
@@ -36,7 +39,15 @@ while [ "$#" -gt 0 ]; do
       shift 2
       ;;
     --json)
-      json=true
+      output=json
+      shift
+      ;;
+    --markdown)
+      output=markdown
+      shift
+      ;;
+    --strict)
+      strict=true
       shift
       ;;
     --min-score)
@@ -100,7 +111,8 @@ score=0
 max_score=100
 findings_file=$(mktemp)
 strengths_file=$(mktemp)
-trap 'rm -f "$findings_file" "$strengths_file"' EXIT
+recommendations_file=$(mktemp)
+trap 'rm -f "$findings_file" "$strengths_file" "$recommendations_file"' EXIT
 
 add_score() {
   score=$((score + $1))
@@ -109,6 +121,10 @@ add_score() {
 
 missing() {
   printf -- '- %s\n' "$1" >> "$findings_file"
+}
+
+recommend() {
+  printf -- '- %s\n' "$1" >> "$recommendations_file"
 }
 
 has_file() {
@@ -150,32 +166,41 @@ fi
 
 if has_file AGENTS.md; then
   add_score 20 'AGENTS.md exists'
+  if [ "$strict" = true ] && file_contains AGENTS.md '(Replace this section|replace with this project|Replace these placeholders|Primary language/framework:)'; then
+    missing 'AGENTS.md still appears to contain placeholder text'
+    recommend 'Customize AGENTS.md with real commands, directories, and project conventions'
+  fi
 else
   missing 'No AGENTS.md project instruction file'
+  recommend 'Install or create AGENTS.md so agents have a project source of truth'
 fi
 
 if has_file .github/pull_request_template.md; then
   add_score 10 'Pull request template exists'
 else
   missing 'No .github/pull_request_template.md'
+  recommend 'Add a PR template that asks for summary, verification, and risk notes'
 fi
 
 if has_file docs/agent-review-checklist.md; then
   add_score 10 'Agent review checklist exists'
 else
   missing 'No docs/agent-review-checklist.md'
+  recommend 'Add an agent review checklist focused on defects, regressions, and missing tests'
 fi
 
 if has_file docs/testing-strategy.md; then
   add_score 10 'Testing strategy exists'
 else
   missing 'No docs/testing-strategy.md'
+  recommend 'Document which checks agents should run for low-risk and high-risk changes'
 fi
 
 if has_file CLAUDE.md || has_file GEMINI.md || has_file .github/copilot-instructions.md || has_file .cursor/rules/agent-workflow.mdc; then
   add_score 10 'At least one tool-specific agent instruction file exists'
 else
   missing 'No tool-specific agent instruction files such as CLAUDE.md, GEMINI.md, Copilot, or Cursor rules'
+  recommend 'Add small tool-specific instruction files that point back to AGENTS.md'
 fi
 
 case "$profile" in
@@ -185,6 +210,7 @@ case "$profile" in
         add_score 20 'package.json has test, lint, typecheck, or build scripts'
       else
         missing 'package.json has no obvious test, lint, typecheck, or build scripts'
+        recommend 'Add package scripts for test, lint, typecheck, or build so agents can verify changes predictably'
       fi
     fi
     ;;
@@ -196,6 +222,7 @@ case "$profile" in
       add_score 10 'Python tests exist'
     else
       missing 'No obvious Python tests found'
+      recommend 'Add pytest tests under tests/ or colocated test_*.py files'
     fi
     ;;
   go)
@@ -203,6 +230,7 @@ case "$profile" in
       add_score 20 'Go test files exist'
     else
       missing 'No Go test files found'
+      recommend 'Add *_test.go files for changed packages'
     fi
     ;;
   rust)
@@ -210,6 +238,7 @@ case "$profile" in
       add_score 20 'Rust test configuration or tests directory exists'
     else
       missing 'No obvious Rust test configuration or tests directory found'
+      recommend 'Add Rust tests under tests/ or document crate-level test commands'
     fi
     ;;
   generic)
@@ -220,6 +249,7 @@ case "$profile" in
       missing 'No obvious test directory found; CI exists but test coverage is unclear'
     else
       missing 'No obvious test directory found'
+      recommend 'Add a tests/ directory or document the project-specific verification command'
     fi
     ;;
 esac
@@ -228,12 +258,14 @@ if has_file README.md; then
   add_score 10 'README.md exists'
 else
   missing 'No README.md'
+  recommend 'Add README.md with setup, usage, and development commands'
 fi
 
 if has_file CONTRIBUTING.md || has_file .github/CONTRIBUTING.md; then
   add_score 10 'Contributing guide exists'
 else
   missing 'No CONTRIBUTING.md'
+  recommend 'Add CONTRIBUTING.md with local setup and review expectations'
 fi
 
 if [ "$score" -gt "$max_score" ]; then
@@ -261,7 +293,7 @@ print_json_array() {
   printf ']'
 }
 
-if [ "$json" = true ]; then
+if [ "$output" = json ]; then
   printf '{'
   printf '"score":%s,' "$score"
   printf '"max_score":%s,' "$max_score"
@@ -273,11 +305,42 @@ if [ "$json" = true ]; then
   else
     printf 'false,'
   fi
+  printf '"strict":'
+  if [ "$strict" = true ]; then
+    printf 'true,'
+  else
+    printf 'false,'
+  fi
   printf '"strengths":'
   print_json_array "$strengths_file"
   printf ',"findings":'
   print_json_array "$findings_file"
+  printf ',"recommendations":'
+  print_json_array "$recommendations_file"
   printf '}\n'
+elif [ "$output" = markdown ]; then
+  printf '# Agent Readiness Report\n\n'
+  printf -- '- Score: `%s/%s`\n' "$score" "$max_score"
+  printf -- '- Minimum score: `%s`\n' "$min_score"
+  printf -- '- Profile: `%s`\n' "$profile"
+  printf -- '- Strict mode: `%s`\n' "$strict"
+
+  if [ -s "$strengths_file" ]; then
+    printf '\n## Strengths\n\n'
+    cat "$strengths_file"
+  fi
+
+  if [ -s "$findings_file" ]; then
+    printf '\n## Missing or Weak Signals\n\n'
+    cat "$findings_file"
+  else
+    printf '\n## Missing or Weak Signals\n\nNone.\n'
+  fi
+
+  if [ -s "$recommendations_file" ]; then
+    printf '\n## Recommended Next Steps\n\n'
+    cat "$recommendations_file"
+  fi
 else
   printf 'Agent Readiness: %s/%s\n' "$score" "$max_score"
   printf 'Detected profile: %s\n' "$profile"
@@ -293,6 +356,11 @@ else
     cat "$findings_file"
   else
     printf '\nNo missing signals found.\n'
+  fi
+
+  if [ -s "$recommendations_file" ]; then
+    printf '\nRecommended next steps:\n'
+    cat "$recommendations_file"
   fi
 fi
 

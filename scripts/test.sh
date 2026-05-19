@@ -43,10 +43,25 @@ test ! -e "$project/docs/agent-review-checklist.md"
 test ! -e "$project/CLAUDE.md"
 
 project=$(mktemp -d)
+printf 'custom\n' > "$project/AGENTS.md"
+scripts/install.sh "$project" --profile generic --mode skip
+grep -q '^custom$' "$project/AGENTS.md"
+test ! -e "$project"/AGENTS.md.bak.*
+
+project=$(mktemp -d)
+printf 'custom\n' > "$project/AGENTS.md"
+scripts/install.sh "$project" --profile generic --mode overwrite
+grep -q 'Use this file as the first source of truth' "$project/AGENTS.md"
+test ! -e "$project"/AGENTS.md.bak.*
+
+project=$(mktemp -d)
 printf '{"scripts":{"test":"node --test","lint":"eslint ."}}\n' > "$project/package.json"
 scripts/install.sh "$project"
 grep -q 'Node.js repository' "$project/AGENTS.md"
 scripts/doctor.sh "$project" --profile node --min-score 50
+report_file=$(mktemp)
+scripts/doctor.sh "$project" --markdown --profile node --min-score 50 > "$report_file"
+grep -q '# Agent Readiness Report' "$report_file"
 
 project=$(mktemp -d)
 printf '[project]\nname = "example"\n' > "$project/pyproject.toml"
@@ -54,7 +69,11 @@ mkdir -p "$project/tests"
 printf 'def test_example():\n    assert True\n' > "$project/tests/test_example.py"
 scripts/install.sh "$project"
 grep -q 'Python repository' "$project/AGENTS.md"
-scripts/doctor.sh "$project" --json --min-score 80 | grep -q '"passed":true'
+json_file=$(mktemp)
+scripts/doctor.sh "$project" --json --min-score 80 > "$json_file"
+grep -q '"passed":true' "$json_file"
+scripts/doctor.sh "$project" --json --strict --min-score 80 > "$json_file"
+grep -q '"recommendations"' "$json_file"
 
 project=$(mktemp -d)
 scripts/install.sh "$project" --dry-run

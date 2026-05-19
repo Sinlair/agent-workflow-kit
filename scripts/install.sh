@@ -9,6 +9,7 @@ Options:
   --profile NAME    Template profile: auto, generic, node, python, go, rust, nextjs
   --dry-run         Show what would be installed without writing files
   --force           Overwrite existing files without creating backups
+  --mode MODE       Existing-file behavior: backup, skip, overwrite
   --no-agent-files  Do not install CLAUDE.md, GEMINI.md, Copilot, or Cursor files
   --no-docs         Do not install review and testing docs
   --with-ci         Install a GitHub Actions readiness workflow
@@ -24,7 +25,7 @@ USAGE
 
 profile=auto
 dry_run=false
-force=false
+mode=backup
 install_agent_files=true
 install_docs=true
 install_ci=false
@@ -45,8 +46,16 @@ while [ "$#" -gt 0 ]; do
       shift
       ;;
     --force)
-      force=true
+      mode=overwrite
       shift
+      ;;
+    --mode)
+      if [ "$#" -lt 2 ]; then
+        printf 'Missing value for --mode\n' >&2
+        exit 2
+      fi
+      mode=$2
+      shift 2
       ;;
     --no-agent-files)
       install_agent_files=false
@@ -137,6 +146,16 @@ case "$profile" in
     ;;
 esac
 
+case "$mode" in
+  backup|skip|overwrite)
+    ;;
+  *)
+    printf 'Unknown mode: %s\n' "$mode" >&2
+    printf 'Supported modes: backup, skip, overwrite\n' >&2
+    exit 2
+    ;;
+esac
+
 template_dir="$repo_dir/templates/profiles/$profile"
 if [ ! -d "$template_dir" ]; then
   printf 'Template profile is missing: %s\n' "$template_dir" >&2
@@ -158,14 +177,28 @@ copy_file() {
 
   ensure_dir "$(dirname -- "$dest")"
 
-  if [ -e "$dest" ] && [ "$force" = false ]; then
-    backup="${dest}.bak.$(date +%Y%m%d%H%M%S)"
-    if [ "$dry_run" = true ]; then
-      printf '[dry-run] cp %s %s\n' "$dest" "$backup"
-    else
-      cp "$dest" "$backup"
-      printf 'Backed up existing %s to %s\n' "$dest" "$backup"
-    fi
+  if [ -e "$dest" ]; then
+    case "$mode" in
+      backup)
+        backup="${dest}.bak.$(date +%Y%m%d%H%M%S)"
+        if [ "$dry_run" = true ]; then
+          printf '[dry-run] cp %s %s\n' "$dest" "$backup"
+        else
+          cp "$dest" "$backup"
+          printf 'Backed up existing %s to %s\n' "$dest" "$backup"
+        fi
+        ;;
+      skip)
+        if [ "$dry_run" = true ]; then
+          printf '[dry-run] skip existing %s\n' "$dest"
+        else
+          printf 'Skipped existing %s\n' "$dest"
+        fi
+        return 0
+        ;;
+      overwrite)
+        ;;
+    esac
   fi
 
   if [ "$dry_run" = true ]; then
@@ -207,7 +240,9 @@ fi
 
 if [ "$dry_run" = true ]; then
   printf '\nDry run complete. Detected profile: %s\n' "$profile"
+  printf 'Existing-file mode: %s\n' "$mode"
 else
   printf '\nAgent Workflow Kit installed with profile: %s\n' "$profile"
+  printf 'Existing-file mode: %s\n' "$mode"
   printf 'Edit AGENTS.md with this project'\''s real commands before relying on it.\n'
 fi

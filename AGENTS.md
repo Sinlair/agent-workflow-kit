@@ -35,5 +35,6 @@ There is no build step for the template files.
 - Confirm profile detection works for changed project templates.
 - Confirm `scripts/doctor.sh` reports a useful score and missing signals.
 - Confirm JSON output stays valid when `scripts/doctor.sh --json` changes.
+- Confirm Markdown output stays useful when `scripts/doctor.sh --markdown` changes.
 - Confirm the README quick start works from a clean clone.
 - Keep examples generic and avoid private project details.

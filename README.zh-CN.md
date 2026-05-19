@@ -49,6 +49,7 @@ Options:
   --profile NAME    模板类型：auto, generic, node, python, go, rust, nextjs
   --dry-run         只展示将要写入的文件，不实际修改
   --force           直接覆盖已有文件，不创建备份
+  --mode MODE       已有文件处理方式：backup, skip, overwrite
   --no-agent-files  不安装 CLAUDE.md、GEMINI.md、Copilot、Cursor 文件
   --no-docs         不安装 review/testing 文档
   --with-ci         安装 GitHub Actions readiness workflow
@@ -62,6 +63,7 @@ Options:
 ./scripts/install.sh ../my-app --dry-run
 ./scripts/install.sh ../my-app --profile node
 ./scripts/install.sh ../my-app --force
+./scripts/install.sh ../my-app --mode skip
 ./scripts/install.sh ../my-app --no-agent-files
 ./scripts/install.sh ../my-app --with-ci
 ```
@@ -72,11 +74,13 @@ Options:
 ./scripts/doctor.sh /path/to/your/project
 ```
 
-自动化场景可以使用 JSON 输出，也可以设置最低分：
+自动化场景可以使用 JSON 输出，也可以设置最低分；需要贴到 PR 或 issue 时可以用 Markdown 输出。
 
 ```bash
 ./scripts/doctor.sh /path/to/your/project --json
+./scripts/doctor.sh /path/to/your/project --markdown
 ./scripts/doctor.sh /path/to/your/project --min-score 80
+./scripts/doctor.sh /path/to/your/project --strict
 ```
 
 示例输出：
