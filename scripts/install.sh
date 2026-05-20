@@ -36,7 +36,8 @@ install_tools=false
 write_manifest=true
 target_dir=
 installed_files=$(mktemp)
-trap 'rm -f "$installed_files"' EXIT
+installed_checksums=$(mktemp)
+trap 'rm -f "$installed_files" "$installed_checksums"' EXIT
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -228,7 +229,12 @@ copy_file() {
     printf 'Installed %s\n' "$dest"
   fi
 
-  printf '%s\n' "${dest#"$target_dir"/}" >> "$installed_files"
+  rel_dest=${dest#"$target_dir"/}
+  printf '%s\n' "$rel_dest" >> "$installed_files"
+  if [ "$dry_run" = false ] && [ -f "$dest" ]; then
+    checksum=$(sha256sum "$dest" | awk '{print $1}')
+    printf '%s  %s\n' "$checksum" "$rel_dest" >> "$installed_checksums"
+  fi
 }
 
 copy_optional_file() {
@@ -255,6 +261,7 @@ fi
 
 if [ "$install_tools" = true ]; then
   copy_file "$repo_dir/scripts/doctor.sh" "$target_dir/scripts/doctor.sh"
+  copy_file "$repo_dir/scripts/uninstall.sh" "$target_dir/scripts/uninstall.sh"
   copy_file "$repo_dir/templates/tools/agent-workflow-kit" "$target_dir/scripts/agent-workflow-kit"
 fi
 
@@ -279,6 +286,8 @@ if [ "$write_manifest" = true ]; then
       printf 'installed_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
       printf 'files=\n'
       sort -u "$installed_files"
+      printf 'checksums=\n'
+      sort -u "$installed_checksums"
     } > "$manifest"
     printf 'Installed %s\n' "$manifest"
   fi

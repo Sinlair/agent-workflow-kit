@@ -6,6 +6,7 @@ cd "$repo_dir"
 
 bash -n scripts/install.sh
 bash -n scripts/doctor.sh
+bash -n scripts/uninstall.sh
 bash -n bin/agent-workflow-kit
 
 test "$(scripts/install.sh --version)" = "$(cat VERSION)"
@@ -41,14 +42,33 @@ project=$(mktemp -d)
 scripts/install.sh "$project" --profile generic --with-ci
 test -f "$project/.github/workflows/agent-workflow-kit.yml"
 test -x "$project/scripts/doctor.sh"
+test -x "$project/scripts/uninstall.sh"
 test -x "$project/scripts/agent-workflow-kit"
 
 project=$(mktemp -d)
 bin/agent-workflow-kit install "$project" --profile generic --with-tools
 test -x "$project/scripts/doctor.sh"
+test -x "$project/scripts/uninstall.sh"
 test -x "$project/scripts/agent-workflow-kit"
 bin/agent-workflow-kit doctor "$project" --min-score 60
 "$project/scripts/agent-workflow-kit" doctor "$project" --min-score 60
+test "$("$project/scripts/agent-workflow-kit" version)" = "$(cat VERSION)"
+
+uninstall_project=$(mktemp -d)
+bin/agent-workflow-kit install "$uninstall_project" --profile generic --with-tools
+bin/agent-workflow-kit uninstall "$uninstall_project" --dry-run
+test -f "$uninstall_project/AGENTS.md"
+bin/agent-workflow-kit uninstall "$uninstall_project"
+test ! -e "$uninstall_project/AGENTS.md"
+test ! -e "$uninstall_project/.agent-workflow-kit/manifest"
+
+uninstall_project=$(mktemp -d)
+scripts/install.sh "$uninstall_project" --profile generic --with-tools
+printf '\ncustom change\n' >> "$uninstall_project/AGENTS.md"
+scripts/uninstall.sh "$uninstall_project" --keep-manifest
+test -f "$uninstall_project/AGENTS.md"
+scripts/uninstall.sh "$uninstall_project" --force
+test ! -e "$uninstall_project/AGENTS.md"
 
 project=$(mktemp -d)
 scripts/install.sh "$project" --profile generic --no-docs --no-agent-files

@@ -9,11 +9,13 @@ Usage: scripts/agent-workflow-kit COMMAND [args]
 
 Commands:
   doctor      Scan this project for AI agent readiness
+  uninstall   Remove Agent Workflow Kit files listed in the manifest
   version     Print installed Agent Workflow Kit version
   help        Show this help
 
 Examples:
   scripts/agent-workflow-kit doctor . --markdown --strict
+  scripts/agent-workflow-kit uninstall . --dry-run
   scripts/agent-workflow-kit version
 USAGE
 }
@@ -29,6 +31,9 @@ shift
 case "$command" in
   doctor)
     exec "$project_dir/scripts/doctor.sh" "$@"
+    ;;
+  uninstall)
+    exec "$project_dir/scripts/uninstall.sh" "$@"
     ;;
   version)
     if [ -f "$project_dir/.agent-workflow-kit/manifest" ]; then

@@ -33,6 +33,7 @@ Or use the unified CLI:
 ```bash
 ./bin/agent-workflow-kit install /path/to/your/project
 ./bin/agent-workflow-kit doctor /path/to/your/project --markdown --strict
+./bin/agent-workflow-kit uninstall /path/to/your/project --dry-run
 ```
 
 The installer auto-detects common project types:
@@ -89,9 +90,21 @@ The installer writes `.agent-workflow-kit/manifest` by default so teams can audi
 When `--with-tools` or `--with-ci` is used, the target project also gets:
 
 - `scripts/doctor.sh`
+- `scripts/uninstall.sh`
 - `scripts/agent-workflow-kit`
 
-The installed wrapper supports `doctor` and `version` inside the target project.
+The installed wrapper supports `doctor`, `uninstall`, and `version` inside the target project.
+
+## Uninstall
+
+Agent Workflow Kit can remove files listed in `.agent-workflow-kit/manifest`:
+
+```bash
+./bin/agent-workflow-kit uninstall /path/to/your/project --dry-run
+./bin/agent-workflow-kit uninstall /path/to/your/project
+```
+
+The uninstall command checks file checksums and skips files that changed after installation. Use `--force` only when you intentionally want to remove modified files.
 
 ## Agent Readiness Scan
 

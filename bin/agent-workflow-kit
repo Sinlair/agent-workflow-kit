@@ -9,6 +9,7 @@ Usage: agent-workflow-kit COMMAND [args]
 
 Commands:
   install     Install templates into a target project
+  uninstall   Remove files installed into a target project
   doctor      Scan a project for AI agent readiness
   profiles    List available template profiles
   version     Print version
@@ -16,6 +17,7 @@ Commands:
 
 Examples:
   agent-workflow-kit install ../my-project --profile node
+  agent-workflow-kit uninstall ../my-project --dry-run
   agent-workflow-kit doctor ../my-project --markdown --strict
   agent-workflow-kit profiles
 USAGE
@@ -32,6 +34,9 @@ shift
 case "$command" in
   install)
     exec "$repo_dir/scripts/install.sh" "$@"
+    ;;
+  uninstall)
+    exec "$repo_dir/scripts/uninstall.sh" "$@"
     ;;
   doctor)
     exec "$repo_dir/scripts/doctor.sh" "$@"

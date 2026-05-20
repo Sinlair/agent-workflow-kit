@@ -29,6 +29,7 @@ cd agent-workflow-kit
 ```bash
 ./bin/agent-workflow-kit install /path/to/your/project
 ./bin/agent-workflow-kit doctor /path/to/your/project --markdown --strict
+./bin/agent-workflow-kit uninstall /path/to/your/project --dry-run
 ```
 
 安装器会自动识别常见项目类型：
@@ -85,9 +86,21 @@ Options:
 使用 `--with-tools` 或 `--with-ci` 时，目标项目还会得到：
 
 - `scripts/doctor.sh`
+- `scripts/uninstall.sh`
 - `scripts/agent-workflow-kit`
 
-安装后的 wrapper 支持在目标项目里运行 `doctor` 和 `version`。
+安装后的 wrapper 支持在目标项目里运行 `doctor`、`uninstall` 和 `version`。
+
+## 卸载
+
+Agent Workflow Kit 可以根据 `.agent-workflow-kit/manifest` 删除已安装文件：
+
+```bash
+./bin/agent-workflow-kit uninstall /path/to/your/project --dry-run
+./bin/agent-workflow-kit uninstall /path/to/your/project
+```
+
+卸载时会检查文件 checksum；如果安装后的文件被改过，会默认跳过。只有确认要删除已修改文件时才使用 `--force`。
 
 ## 检查项目是否适合 Agent
 

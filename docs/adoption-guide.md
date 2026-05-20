@@ -57,7 +57,7 @@ scripts/install.sh ../my-project --with-tools
 ```
 
 This copies `scripts/doctor.sh` into the target project so maintainers can run readiness checks without keeping this repository checked out.
-It also installs `scripts/agent-workflow-kit`, a small wrapper for `doctor` and `version` inside the target project.
+It also installs `scripts/uninstall.sh` and `scripts/agent-workflow-kit`, a small wrapper for `doctor`, `uninstall`, and `version` inside the target project.
 
 The installer writes `.agent-workflow-kit/manifest` by default. Keep it committed when you want a simple audit trail for installed files and version.
 
@@ -68,3 +68,19 @@ scripts/install.sh ../my-project --with-ci
 ```
 
 `--with-ci` also installs `scripts/doctor.sh`. The CI template runs `scripts/doctor.sh . --min-score 80`.
+
+## 7. Roll Back If Needed
+
+Preview removal first:
+
+```bash
+scripts/uninstall.sh ../my-project --dry-run
+```
+
+Then uninstall:
+
+```bash
+scripts/uninstall.sh ../my-project
+```
+
+The uninstall command checks manifest checksums and skips files that changed after installation. Use `--force` only when you intentionally want to remove modified files.
